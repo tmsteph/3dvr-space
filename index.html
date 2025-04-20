@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CommandCraft</title>
+  <style>
+    body {
+      font-family: monospace;
+      background-color: #111;
+      color: #0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #terminal {
+      flex-grow: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    #input-form {
+      display: flex;
+      border-top: 1px solid #0f0;
+      padding: 0.5rem;
+    }
+    #input {
+      flex-grow: 1;
+      background: #000;
+      color: #0f0;
+      border: none;
+      padding: 0.5rem;
+      font-size: 1rem;
+      font-family: monospace;
+    }
+    #input:focus {
+      outline: none;
+    }
+    @media (max-width: 600px) {
+      #input {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal">
+    <p>Welcome to <strong>CommandCraft</strong> 🚀</p>
+    <p>Your ship is stranded. Type <code>help()</code> to begin your training.</p>
+  </div>
+  <form id="input-form">
+    <input id="input" type="text" autocomplete="off" autofocus />
+  </form>
+
+  <script>
+    const terminal = document.getElementById('terminal');
+    const inputForm = document.getElementById('input-form');
+    const input = document.getElementById('input');
+
+    const context = {
+      help: () => {
+        return `Available commands:\n- help()\n- velocity(mass, radius)\n- greet(name)`;
+      },
+      greet: (name) => {
+        return `Hello, ${name}! Ready to engineer your escape?`;
+      },
+      velocity: (mass, radius) => {
+        const G = 6.674e-11;
+        return Math.sqrt((2 * G * mass) / radius).toFixed(2) + ' m/s';
+      },
+    };
+
+    function printOutput(output) {
+      const para = document.createElement('p');
+      para.textContent = output;
+      terminal.appendChild(para);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    inputForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const command = input.value;
+      printOutput('> ' + command);
+
+      try {
+        const func = new Function(...Object.keys(context), `return ${command}`);
+        const result = func(...Object.values(context));
+        if (result !== undefined) printOutput(result);
+      } catch (err) {
+        printOutput('Error: ' + err.message);
+      }
+
+      input.value = '';
+    });
+  </script>
+</body>
+</html>
