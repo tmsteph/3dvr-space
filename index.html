@@ -39,6 +39,10 @@
     #input:focus {
       outline: none;
     }
+    .instructions {
+      font-size: 0.9rem;
+      color: #8f8;
+    }
   </style>
 </head>
 <body>
@@ -46,6 +50,16 @@
   <div id="terminal">
     <p>Welcome to <strong>OrbitOps - CommandCraft</strong> 🚀</p>
     <p>Use <code>launch(thrust, angle, fuel)</code> to launch your rocket!</p>
+    <div class="instructions">
+      <p><strong>Instructions:</strong></p>
+      <ul>
+        <li><code>thrust</code>: Power applied to the rocket (try 1000–10000)</li>
+        <li><code>angle</code>: Launch angle in degrees (0 = right, 90 = straight up)</li>
+        <li><code>fuel</code>: Amount of fuel in kg (try 100–1000)</li>
+        <li>Goal: Reach orbit (y-position less than 50) without crashing.</li>
+        <li>Example command: <code>launch(5000, 75, 500)</code></li>
+      </ul>
+    </div>
   </div>
   <form id="input-form">
     <input id="input" type="text" autocomplete="off" autofocus />
@@ -75,10 +89,10 @@
         vx: Math.cos(angle) * thrust / 1000,
         vy: -Math.sin(angle) * thrust / 1000,
         fuel: fuelMass,
-        gravity: 9.8 / 60, // approximate per frame
+        gravity: 9.8 / 60,
         time: 0
       };
-      print(`Launching with thrust=${thrust}, angle=${angle.toFixed(2)}, fuel=${fuelMass}`);
+      print(`Launching with thrust=${thrust}, angle=${(angle * 180 / Math.PI).toFixed(2)}, fuel=${fuelMass}`);
     }
 
     function updateRocket() {
