@@ -3,97 +3,132 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CommandCraft</title>
+  <title>OrbitOps - CommandCraft</title>
   <style>
     body {
-      font-family: monospace;
-      background-color: #111;
-      color: #0f0;
       margin: 0;
-      padding: 0;
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
       display: flex;
       flex-direction: column;
       height: 100vh;
     }
-    #terminal {
+    canvas {
+      background: radial-gradient(ellipse at bottom, #003366 0%, #000000 100%);
       flex-grow: 1;
-      padding: 1rem;
+    }
+    #terminal {
+      padding: 0.5rem;
+      background: #111;
       overflow-y: auto;
-      white-space: pre-wrap;
+      height: 200px;
     }
     #input-form {
       display: flex;
       border-top: 1px solid #0f0;
-      padding: 0.5rem;
     }
     #input {
-      flex-grow: 1;
-      background: #000;
-      color: #0f0;
-      border: none;
+      flex: 1;
       padding: 0.5rem;
+      background: #000;
+      border: none;
+      color: #0f0;
       font-size: 1rem;
-      font-family: monospace;
     }
     #input:focus {
       outline: none;
     }
-    @media (max-width: 600px) {
-      #input {
-        font-size: 1.2rem;
-      }
-    }
   </style>
 </head>
 <body>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
   <div id="terminal">
-    <p>Welcome to <strong>CommandCraft</strong> 🚀</p>
-    <p>Your ship is stranded. Type <code>help()</code> to begin your training.</p>
+    <p>Welcome to <strong>OrbitOps - CommandCraft</strong> 🚀</p>
+    <p>Use <code>launch(thrust, angle, fuel)</code> to launch your rocket!</p>
   </div>
   <form id="input-form">
     <input id="input" type="text" autocomplete="off" autofocus />
   </form>
 
   <script>
-    const terminal = document.getElementById('terminal');
-    const inputForm = document.getElementById('input-form');
-    const input = document.getElementById('input');
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const terminal = document.getElementById("terminal");
+    const inputForm = document.getElementById("input-form");
+    const input = document.getElementById("input");
 
-    const context = {
-      help: () => {
-        return `Available commands:\n- help()\n- velocity(mass, radius)\n- greet(name)`;
-      },
-      greet: (name) => {
-        return `Hello, ${name}! Ready to engineer your escape?`;
-      },
-      velocity: (mass, radius) => {
-        const G = 6.674e-11;
-        return Math.sqrt((2 * G * mass) / radius).toFixed(2) + ' m/s';
-      },
-    };
+    let rocket = null;
 
-    function printOutput(output) {
-      const para = document.createElement('p');
-      para.textContent = output;
-      terminal.appendChild(para);
+    function print(msg) {
+      const p = document.createElement("p");
+      p.textContent = msg;
+      terminal.appendChild(p);
       terminal.scrollTop = terminal.scrollHeight;
     }
 
-    inputForm.addEventListener('submit', (e) => {
+    function launch(thrust, angle, fuelMass) {
+      angle = (angle * Math.PI) / 180;
+      rocket = {
+        x: 50,
+        y: canvas.height - 50,
+        vx: Math.cos(angle) * thrust / 1000,
+        vy: -Math.sin(angle) * thrust / 1000,
+        fuel: fuelMass,
+        gravity: 9.8 / 60, // approximate per frame
+        time: 0
+      };
+      print(`Launching with thrust=${thrust}, angle=${angle.toFixed(2)}, fuel=${fuelMass}`);
+    }
+
+    function updateRocket() {
+      if (!rocket || rocket.fuel <= 0) return;
+
+      rocket.vy += rocket.gravity;
+      rocket.x += rocket.vx;
+      rocket.y += rocket.vy;
+      rocket.fuel -= 1;
+      rocket.time++;
+
+      if (rocket.y > canvas.height - 10) {
+        print("💥 Crash landing. Try adjusting thrust and angle.");
+        rocket = null;
+      } else if (rocket.y < 50 && rocket.time > 30) {
+        print("🎉 Success! You reached orbit height.");
+        rocket = null;
+      }
+    }
+
+    function drawRocket() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (rocket) {
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(rocket.x, rocket.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+
+    function gameLoop() {
+      updateRocket();
+      drawRocket();
+      requestAnimationFrame(gameLoop);
+    }
+
+    inputForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const command = input.value;
-      printOutput('> ' + command);
-
+      print("> " + command);
       try {
-        const func = new Function(...Object.keys(context), `return ${command}`);
-        const result = func(...Object.values(context));
-        if (result !== undefined) printOutput(result);
+        const func = new Function("launch", command);
+        func(launch);
       } catch (err) {
-        printOutput('Error: ' + err.message);
+        print("Error: " + err.message);
       }
-
-      input.value = '';
+      input.value = "";
     });
+
+    gameLoop();
   </script>
 </body>
 </html>
